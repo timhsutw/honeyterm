@@ -1,0 +1,55 @@
+#!/bin/bash
+
+EXT_IFACE=eth0
+MEM_LIMIT=128M
+SERVICE=22
+
+QUOTA_IN=5242880
+QUOTA_OUT=1310720
+
+CAPS_ENABLE="--cap-add NET_BIND_SERVICE --cap-add SYS_CHROOT --cap-add SETGID --cap-add SETUID --cap-add KILL --cap-add CHOWN"
+
+{
+    CNM="honeypot-${REMOTE_HOST}"
+    HOSTNAME=$(/bin/hostname)
+
+    # check if the container exists
+    /usr/bin/docker inspect "${CNM}" &> /dev/null
+    if [ "$?" == "1" ]; then
+	# create new container
+	echo "create new container"
+        CID=$(/usr/bin/docker run --name ${CNM} -h ${HOSTNAME} --cap-drop=ALL ${CAPS_ENABLE} -e "REMOTE_HOST=${REMOTE_HOST}" -m ${MEM_LIMIT} -d -i honeypot)
+	CIP=$(/usr/bin/docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID})
+	PID=$(/usr/bin/docker inspect --format '{{ .State.Pid }}' ${CID})
+	echo "container is ${CID}"
+	/usr/bin/docker exec -u root ${CID} /sbin/init 3
+	# drop all inbound and outbound traffic by default
+#        /usr/bin/nsenter --target ${PID} -n /sbin/iptables -P INPUT DROP
+#        /usr/bin/nsenter --target ${PID} -n /sbin/iptables -P OUTPUT DROP
+
+	# allow access to the service regardless of the quota
+#        /usr/bin/nsenter --target ${PID} -n /sbin/iptables -A INPUT -p tcp -m tcp --dport ${SERVICE} -j ACCEPT
+#        /usr/bin/nsenter --target ${PID} -n /sbin/iptables -A INPUT -m quota --quota ${QUOTA_IN} -j ACCEPT
+
+	# allow related outbound access limited by the quota
+#        /usr/bin/nsenter --target ${PID} -n /sbin/iptables -A OUTPUT -p tcp --sport ${SERVICE} -m state --state ESTABLISHED,RELATED -m quota --quota ${QUOTA_OUT} -j ACCEPT
+
+	# enable the host to connect to rsyslog on the host
+#        /usr/bin/nsenter --target ${PID} -n /sbin/iptables -A OUTPUT -p tcp -m tcp --dst 172.17.42.1 --dport 514 -j ACCEPT
+
+	# add iptables redirection rule
+	/sbin/iptables -t nat -A PREROUTING -p tcp -i ${EXT_IFACE} -s ${REMOTE_HOST} --dport ${SERVICE} -j DNAT --to-destination ${CIP}
+	/sbin/iptables -t nat -A POSTROUTING -j MASQUERADE
+    else
+	echo "start container if exited and grab the cid"
+        /usr/bin/docker start "${CNM}" &> /dev/null
+        CID=$(/usr/bin/docker inspect --format '{{ .Id }}' "${CNM}")
+	CIP=$(/usr/bin/docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID})
+	# add iptables redirection rule
+	/sbin/iptables -t nat -A PREROUTING -p tcp -i ${EXT_IFACE} -s ${REMOTE_HOST} --dport ${SERVICE} -j DNAT --to-destination ${CIP}
+	/sbin/iptables -t nat -A POSTROUTING -j MASQUERADE
+    fi
+} &> /tmp/debug.log
+
+# forward traffic to the container
+exec /usr/bin/socat stdin tcp:${CIP}:22,retry=60

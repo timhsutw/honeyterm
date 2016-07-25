@@ -1,0 +1,14 @@
+service honeypot
+{
+        disable         = no
+        instances       = UNLIMITED
+        server          = /usr/bin/honeypot
+        socket_type     = stream
+        protocol        = tcp
+        port            = 22
+        user            = root
+        wait            = no
+        log_type        = SYSLOG authpriv info
+        log_on_success  = HOST PID
+        log_on_failure  = HOST
+}
