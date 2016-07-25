@@ -1,0 +1,156 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(File.dirname(__FILE__)), 'lib/showterm')
+
+class Showterm::Main
+
+  def run
+    if ARGV.include?('-h') || ARGV.include?('--help')
+
+      help
+
+    elsif ARGV[0] == '--retry'
+
+      ARGV.shift
+      reupload
+
+    elsif ARGV[0] == '--delete'
+
+      ARGV.shift
+      delete
+
+    else
+
+      if '-e' == ARGV[0] || '--edit' == ARGV[0]
+        @edit_timings = true
+        ARGV.shift
+      end
+
+      sf, tf = record
+      sf, tf = edit(sf, tf) if @edit_timings
+      upload sf, tf
+    end
+  end
+
+  def record
+    sf, tf = Showterm.record!(*ARGV)
+    [sf, tf]
+  end
+
+  def help
+    puts <<-EOF
+      Usage: showterm [-e] <command to run>
+             showterm --retry <script> <times>
+             showterm --delete <url>
+
+      showterm will record the exact output of your session, and upload it to the
+      internet where it can be replayed by anyone to whom you give the URL.
+
+      You can pass `-e` as the first arg and it will allow you to edit the timings
+      file before uploading. This can be nice if you want to take long pauses (such
+      as searching an answer out) in between commands.
+
+      If you would like to attempt an upload again
+      showterm --retry <script> <times>
+
+      To delete a showterm you have uploaded from this computer
+      showterm --delete <url>
+    EOF
+  end
+
+  def reupload
+    if ARGV.size == 2
+      upload(*ARGV.map{ |path| File.read(path) })
+    else
+      puts "Usage: showterm --retry <scriptfile> <timesfile>"
+    end
+  end
+
+  def delete
+    if ARGV.size == 1
+      puts "Deleting..."
+      puts Showterm.delete! ARGV.first
+    else
+      puts "Usage: showterm --delete <url>"
+    end
+  rescue => e
+    puts [e] + e.backtrace
+    puts "-" * 80
+  end
+
+  def upload(sf, tf)
+    url = Showterm.upload! sf, tf
+    File.open('/tmp/command.log', 'w+') { |file| file.write(sf) }
+    File.open('/tmp/showterm.log', 'a+') { |file| file.write(url + "\n") }
+
+  rescue => e
+    puts [e] + e.backtrace
+    puts "-" * 80
+    die_politely "DON'T PANIC", sf, tf
+  end
+
+  def edit(sf, tf)
+    prepare_to_edit
+
+    times_path = save 'times', tf
+    success = system(editor, times_path)
+    if success
+      tf = File.read(times_path)
+    else
+      die_politely "OK, discarding edits and skipping upload.", sf, tf
+    end
+
+    [sf, tf]
+  end
+
+  def prepare_to_edit
+    puts "Recording done, now it's time to dress up those timings!" +
+         if 'vim' == editor
+           <<-TIPS
+             Hot vim tips:
+
+             Use :cq  from vim to exit nonzero, and cancel the upload
+             Use :%s/^[0-9]\./0./  to get rid of all longish pauses.
+           TIPS
+         else
+           "If you can make your editor return nonzero, it will cancel the upload."
+         end +
+         "[Hit Enter to edit]"
+
+    $stdin.readline
+  end
+
+  def save(which, data)
+    path = "/tmp/showtime.#$$.#{which}"
+    File.open(path, 'w') do |f|
+      f.write(data)
+    end
+    path
+  end
+
+  def die_politely(message, sf, tf)
+    script_path = save 'script', sf
+    times_path = save 'times', tf
+    puts <<-MESSAGE
+      #{message}
+      your work is safe in "#{script_path}" and "#{times_path}"
+      To try uploading manually, use:
+      showterm --retry "#{script_path}" "#{times_path}"
+    MESSAGE
+    exit 1
+  end
+
+  def dedent(str)
+    str.split("\n").map(&:lstrip).join("\n")
+  end
+
+  def puts(str, *a)
+    super(String === str ? dedent(str) : str, *a)
+  end
+
+  def editor
+    ENV.fetch('VISUAL', ENV.fetch('EDITOR', 'vim'))
+  end
+end
+
+Showterm::Main.new.run
