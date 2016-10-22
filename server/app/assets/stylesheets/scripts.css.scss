@@ -1,0 +1,30 @@
+// Place all the styles related to the scripts controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: http://sass-lang.com/
+
+body {
+  background: black;
+  color: white;
+  margin: 0;
+  padding: 0;
+  font-family: monospace;
+  white-space: nowrap;
+
+  .mainpage {
+    white-space: normal;
+  }
+}
+// Fix http://showterm.io/2eb3af59620cb9796a4dc
+div.terminal {
+    line-height: 120%;
+}
+.terminal-cursor {
+    background: rgba(255, 255, 255, 0.4)
+}
+
+h1 {
+  color: white;
+}
+a {
+  color: white;
+}

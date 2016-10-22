@@ -1,0 +1,11 @@
+<style>
+    body { overflow: hidden }
+</style>
+<script>
+  $(document.body).showterm({
+   scriptfile: <%=raw_json @script.scriptfile %>,
+   timingfile: <%=raw_json @script.timingfile %>,
+   columns: <%= raw_json @script.cols %>,
+   lines: <%=raw_json @script.lines %>
+   });
+</script>
