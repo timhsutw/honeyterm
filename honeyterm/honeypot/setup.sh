@@ -27,10 +27,7 @@ sed -i 's/@include common-auth/#@include common-auth/g' /etc/pam.d/sshd
 line="iauth       requisite     pam_python.so pwreveal.py"
 line=$mark_line$line
 sed -i "$line" /etc/pam.d/sshd
-cp /root/honeypot/pwreveal.py /lib/security
 
 apt-get -y install libpam-python
 
 #echo "honeypot                        @$syslog_ip" > /etc/rsyslog.d/50-default.conf
-
-
