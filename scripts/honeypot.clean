@@ -20,9 +20,11 @@ for CID in $(/usr/bin/docker ps -a --no-trunc | grep "honeypot-" | cut -f1 -d" "
     if [[ "${RUNTIME}" -gt "${LIFETIME}" ]]; then
         logger -p local3.info "Stopping honeypot container ${CID}"
         /usr/bin/docker stop $CID
-        MID=$(/bin/cat /var/lib/docker/165536.165536/image/aufs/layerdb/mounts/${CID}/mount-id)
+        MID=$(/bin/cat /var/lib/docker/image/aufs/layerdb/mounts/${CID}/mount-id)
         mkdir -p /var/log/honeypot/$REMOTE_HOST
-        cp -a /var/lib/docker/165536.165536/aufs/diff/$MID /var/log/honeypot/$REMOTE_HOST
+        # Save asciiname.json
+        docker cp $CID:/tmp/asciinema.json /var/log/honeypot/$REMOTE_HOST/asciinema_$CID.json > /dev/null 2>&1
+        cp -a /var/lib/docker/aufs/diff/$MID /var/log/honeypot/$REMOTE_HOST
         #/usr/bin/docker rm -f $CID
         
     fi
