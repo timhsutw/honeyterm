@@ -13,9 +13,9 @@ echo "$account:$password"|chpasswd
 
 # run showterm right after login from bashrc
 cat >> /home/$account/.bashrc << _EOF_
-if [ -z \$already_showterm ]; then
-export already_showterm=true
-/usr/local/rvm/wrappers/ruby-2.2.2/showterm
+if [ -z \$already_asciinema ]; then
+export already_asciinema=true
+asciinema rec /tmp/asciinema.json
 exit
 fi
 _EOF_

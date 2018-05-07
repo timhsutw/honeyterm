@@ -18,7 +18,7 @@ CAPS_ENABLE="--cap-add NET_BIND_SERVICE --cap-add SYS_CHROOT --cap-add SETGID --
     if [ "$?" == "1" ]; then
 	# create new container
 	echo "create new container"
-        CID=$(/usr/bin/docker run --name ${CNM} -h ${HOSTNAME} --cap-drop=ALL ${CAPS_ENABLE} -e "REMOTE_HOST=${REMOTE_HOST}" -m ${MEM_LIMIT} -d -i honeypot)
+        CID=$(/usr/bin/docker run --name ${CNM} -h ${HOSTNAME} --cap-drop=DAC_OVERRIDE --cap-drop=FSETID --cap-drop=FOWNER --cap-drop=MKNOD --cap-drop=NET_RAW --cap-drop=SETFCAP --cap-drop=SETPCAP --cap-drop=KILL  -e "REMOTE_HOST=${REMOTE_HOST}" -m ${MEM_LIMIT} -d -i honeypot)
 	CIP=$(/usr/bin/docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${CID})
 	PID=$(/usr/bin/docker inspect --format '{{ .State.Pid }}' ${CID})
 	echo "container is ${CID}"

@@ -1,0 +1,26 @@
+Metadata-Version: 1.1
+Name: asciinema
+Version: 1.4.0
+Summary: Terminal session recorder
+Home-page: https://asciinema.org
+Author: Marcin Kulik
+Author-email: m@ku1ik.com
+License: GNU GPLv3
+Download-URL: https://github.com/asciinema/asciinema/archive/v1.4.0.tar.gz
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Topic :: System :: Shells
+Classifier: Topic :: Terminals
+Classifier: Topic :: Utilities
